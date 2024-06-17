@@ -1,5 +1,7 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
+use crate::util::{random_float, random_unit_float};
+
 #[derive(Debug, Clone, Copy)]
 pub struct Vector3 {
     x: f64,
@@ -38,6 +40,44 @@ impl Vector3 {
 
     pub fn length_squared(self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
+    }
+
+    pub fn random_unit() -> Vector3 {
+        Self::new(
+            random_unit_float(),
+            random_unit_float(),
+            random_unit_float(),
+        )
+    }
+
+    pub fn random(min: f64, max: f64) -> Vector3 {
+        Self::new(
+            random_float(min, max),
+            random_float(min, max),
+            random_float(min, max),
+        )
+    }
+
+    pub fn random_in_unit_sphere() -> Vector3 {
+        loop {
+            let point = Self::random(-1.0, 1.0);
+            if point.length_squared() < 1.0 {
+                return point;
+            }
+        }
+    }
+
+    pub fn random_unit_vector() -> Vector3 {
+        unit_vector(Self::random_in_unit_sphere())
+    }
+
+    pub fn random_on_hemisphere(normal: Vector3) -> Vector3 {
+        let on_unit_sphere = Self::random_unit_vector();
+        if dot_product(on_unit_sphere, normal) > 0.0 {
+            on_unit_sphere
+        } else {
+            -on_unit_sphere
+        }
     }
 }
 

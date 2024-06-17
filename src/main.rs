@@ -4,7 +4,7 @@ use minifb::{Key, Window, WindowOptions};
 use tracer::{camera::Camera, sphere::Sphere, vec::Vector3, world::World};
 
 fn main() {
-    let width = 800;
+    let width = 400;
     let mut camera = Camera::new(width);
     let height = camera.height();
 

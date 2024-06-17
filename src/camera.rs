@@ -1,5 +1,8 @@
+use std::time::Instant;
+
 use crate::{
     ray::Ray,
+    util::sample_square,
     vec::{unit_vector, Vector3},
     world::World,
 };
@@ -9,10 +12,13 @@ pub struct Camera {
     width: u32,
     height: u32,
     center: Vector3,
+    samples_per_pixel: u32,
+    max_depth: u32,
 
     pixel_delta_u: Vector3,
     pixel_delta_v: Vector3,
     pixel00_loc: Vector3,
+    pixel_samples_scale: f64,
 }
 
 impl Camera {
@@ -38,14 +44,19 @@ impl Camera {
 
         let pixel00_loc = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
 
+        let samples_per_pixel = 100;
+
         Self {
             width,
             height: height as u32,
             frame_buffer: vec![0; width as usize * height as usize],
             center: Vector3::zero(),
+            samples_per_pixel,
+            max_depth: 10,
             pixel00_loc,
             pixel_delta_u,
             pixel_delta_v,
+            pixel_samples_scale: 1.0 / samples_per_pixel as f64,
         }
     }
 
@@ -57,40 +68,72 @@ impl Camera {
         self.height
     }
 
+    fn get_ray(&self, i: u32, j: u32) -> Ray {
+        let offset = sample_square();
+
+        let pixel_sample_center = self.pixel00_loc
+            + (self.pixel_delta_u * (i as f64 + offset.x()))
+            + (self.pixel_delta_v * (j as f64 + offset.y()));
+
+        Ray::new(self.center, pixel_sample_center - self.center)
+    }
+
     pub fn render(&mut self, world: &World) {
+        let start = Instant::now();
+
         for j in 0..self.height {
             for i in 0..self.width {
-                let pixel_center = self.pixel00_loc
-                    + (self.pixel_delta_u * (i as f64))
-                    + (self.pixel_delta_v * (j as f64));
-                let ray_direction = pixel_center - self.center;
-                let ray = Ray::new(self.center, ray_direction);
-
-                let color = Camera::ray_color(&world, &ray);
+                let mut color = Vector3::zero();
+                for _ in 0..self.samples_per_pixel {
+                    let ray = self.get_ray(i, j);
+                    color = color + Self::ray_color(&world, &ray, self.max_depth);
+                }
 
                 // TODO: Simplify color handling
-                let (r, g, b) = (color.x() as u32, color.y() as u32, color.z() as u32);
+                let (r, g, b) = (
+                    (clamp((color.x() * self.pixel_samples_scale).sqrt(), 0.0, 1.0) * 255.0) as u32,
+                    (clamp((color.y() * self.pixel_samples_scale).sqrt(), 0.0, 1.0) * 255.0) as u32,
+                    (clamp((color.z() * self.pixel_samples_scale).sqrt(), 0.0, 1.0) * 255.0) as u32,
+                );
                 self.frame_buffer[(i + (j * self.width)) as usize] = (r << 16) | (g << 8) | b
             }
         }
+
+        println!("Frame time: {}ms", start.elapsed().as_millis());
     }
 
-    fn ray_color(world: &World, ray: &Ray) -> Vector3 {
-        let hit = world.hit(ray, 0.0, f64::INFINITY);
-        if hit.is_some() {
-            let normal = hit.unwrap().normal();
-            return Vector3::new(
-                (normal.x() + 1.0) * 255.0,
-                (normal.y() + 1.0) * 255.0,
-                (normal.z() + 1.0) * 255.0,
-            ) * 0.5;
+    fn ray_color(world: &World, ray: &Ray, depth: u32) -> Vector3 {
+        if depth <= 0 {
+            return Vector3::zero();
         }
 
-        let unit_direction = unit_vector(ray.direction());
+        let hit = world.hit(ray, 0.001, f64::INFINITY);
 
-        let a = 0.5 * (unit_direction.y() + 1.0);
+        match hit {
+            Some(hit) => {
+                let normal = hit.normal();
+                // let bounce_direction = Vector::random_point_on_hemispere(normal);
+                let bounce_direction = normal + Vector3::random_unit_vector();
+                let bounce_ray = Ray::new(hit.point(), bounce_direction);
+                return Self::ray_color(world, &bounce_ray, depth - 1) * 0.5;
+            }
+            None => {
+                let unit_direction = unit_vector(ray.direction());
 
-        return Vector3::new(255.0, 255.0, 255.0) * (1.0 - a)
-            + Vector3::new(127.5, 178.5, 255.0) * a;
+                let a = 0.5 * (unit_direction.y() + 1.0);
+
+                return Vector3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vector3::new(0.5, 0.7, 1.0) * a;
+            }
+        }
     }
+}
+
+fn clamp(value: f64, min: f64, max: f64) -> f64 {
+    return if value > max {
+        max
+    } else if value < min {
+        min
+    } else {
+        value
+    };
 }

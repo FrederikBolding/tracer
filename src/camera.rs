@@ -111,11 +111,15 @@ impl Camera {
 
         match hit {
             Some(hit) => {
-                let normal = hit.normal();
-                // let bounce_direction = Vector::random_point_on_hemispere(normal);
-                let bounce_direction = normal + Vector3::random_unit_vector();
-                let bounce_ray = Ray::new(hit.point(), bounce_direction);
-                return Self::ray_color(world, &bounce_ray, depth - 1) * 0.5;
+                let material = hit.material();
+
+                let bounce = material.scatter(ray, &hit);
+                match bounce {
+                    Some((bounce_ray, attenunation)) => {
+                        Self::ray_color(world, &bounce_ray, depth - 1) * attenunation
+                    }
+                    None => Vector3::zero(),
+                }
             }
             None => {
                 let unit_direction = unit_vector(ray.direction());

@@ -1,4 +1,7 @@
-use crate::vec::{dot_product, Vector3};
+use crate::{
+    material::Material,
+    vec::{dot_product, Vector3},
+};
 
 pub struct Ray {
     origin: Vector3,    // A
@@ -26,15 +29,17 @@ impl Ray {
 pub struct HitRecord {
     point: Vector3,
     normal: Vector3,
+    material: Material, // TODO: Should this be a borrowed value?
     t: f64,
     front_face: bool,
 }
 
 impl HitRecord {
-    pub fn new(point: Vector3, normal: Vector3, t: f64, front_face: bool) -> HitRecord {
+    pub fn new(point: Vector3, normal: Vector3, material: Material, t: f64, front_face: bool) -> HitRecord {
         Self {
             point,
             normal,
+            material,
             t,
             front_face,
         }
@@ -46,6 +51,10 @@ impl HitRecord {
 
     pub fn normal(&self) -> Vector3 {
         self.normal
+    }
+
+    pub fn material(&self) -> Material {
+        self.material
     }
 
     pub fn t(&self) -> f64 {

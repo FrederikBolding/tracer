@@ -1,4 +1,5 @@
 use crate::{
+    material::Material,
     ray::{derive_face_normal, HitRecord, Hittable, Ray},
     vec::{dot_product, Vector3},
 };
@@ -6,11 +7,16 @@ use crate::{
 pub struct Sphere {
     center: Vector3,
     radius: f64,
+    material: Material,
 }
 
 impl Sphere {
-    pub fn new(center: Vector3, radius: f64) -> Self {
-        Self { center, radius }
+    pub fn new(center: Vector3, radius: f64, material: Material) -> Self {
+        Self {
+            center,
+            radius,
+            material,
+        }
     }
 
     pub fn center(&self) -> Vector3 {
@@ -19,6 +25,10 @@ impl Sphere {
 
     pub fn radius(&self) -> f64 {
         self.radius
+    }
+
+    pub fn material(&self) -> Material {
+        self.material
     }
 }
 
@@ -50,6 +60,6 @@ impl Hittable for Sphere {
         let point = ray.at(t);
         let outward_normal = (point - self.center()) / self.radius();
         let (front_face, normal) = derive_face_normal(ray, outward_normal);
-        return Some(HitRecord::new(point, normal, t, front_face));
+        return Some(HitRecord::new(point, normal, self.material, t, front_face));
     }
 }

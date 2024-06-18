@@ -42,6 +42,11 @@ impl Vector3 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
+    pub fn near_zero(self) -> bool {
+        let s = 1e-8;
+        self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
+    }
+
     pub fn random_unit() -> Vector3 {
         Self::new(
             random_unit_float(),
@@ -79,6 +84,10 @@ impl Vector3 {
             -on_unit_sphere
         }
     }
+
+    pub fn reflect(vector: Vector3, normal: Vector3) -> Vector3 {
+        vector - (normal * 2.0 * dot_product(vector, normal))
+    }
 }
 
 impl Add for Vector3 {
@@ -94,6 +103,14 @@ impl Sub for Vector3 {
 
     fn sub(self, rhs: Self) -> Self::Output {
         Vector3::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
+    }
+}
+
+impl Mul<Vector3> for Vector3 {
+    type Output = Self;
+
+    fn mul(self, rhs: Vector3) -> Self::Output {
+        Vector3::new(self.x * rhs.x(), self.y * rhs.y(), self.z * rhs.z())
     }
 }
 

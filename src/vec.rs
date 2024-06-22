@@ -151,9 +151,9 @@ pub fn dot_product(u: Vector3, v: Vector3) -> f64 {
 
 pub fn cross_product(u: Vector3, v: Vector3) -> Vector3 {
     Vector3::new(
-        u.y * v.z - u.z * u.y,
-        u.z * v.x - u.x * u.z,
-        u.x * u.y - u.y * u.x,
+        u.y * v.z - u.z * v.y,
+        u.z * v.x - u.x * v.z,
+        u.x * v.y - u.y * v.x,
     )
 }
 

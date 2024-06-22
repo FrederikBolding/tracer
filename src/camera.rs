@@ -96,6 +96,8 @@ impl Camera {
             .enumerate()
             .collect();
 
+        let interval = Interval::new(0.0, 1.0);
+
         chunks.into_par_iter().for_each(|(height_index, chunk)| {
             for i in 0..self.width {
                 let mut color = Vector3::zero();
@@ -104,12 +106,15 @@ impl Camera {
                     color = color + Self::ray_color(&world, &ray, self.max_depth);
                 }
 
-                // TODO: Simplify color handling
+                let scaled_color = color * self.pixel_samples_scale;
+
                 let (r, g, b) = (
-                    (clamp((color.x() * self.pixel_samples_scale).sqrt(), 0.0, 1.0) * 255.0) as u32,
-                    (clamp((color.y() * self.pixel_samples_scale).sqrt(), 0.0, 1.0) * 255.0) as u32,
-                    (clamp((color.z() * self.pixel_samples_scale).sqrt(), 0.0, 1.0) * 255.0) as u32,
+                    (interval.clamp(scaled_color.x().sqrt()) * 255.0) as u32,
+                    (interval.clamp(scaled_color.y().sqrt()) * 255.0) as u32,
+                    (interval.clamp(scaled_color.z().sqrt()) * 255.0) as u32,
                 );
+
+                // Pack RGB into 1 u32
                 chunk[i as usize] = (r << 16) | (g << 8) | b
             }
         });
@@ -167,14 +172,4 @@ impl Camera {
         let point = random_in_unit_disk();
         self.center + (self.defocus_disk_u * point.x()) + (self.defocus_disk_v * point.y())
     }
-}
-
-fn clamp(value: f64, min: f64, max: f64) -> f64 {
-    return if value > max {
-        max
-    } else if value < min {
-        min
-    } else {
-        value
-    };
 }

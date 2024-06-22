@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::time::Instant;
 
 use crate::{
@@ -8,7 +9,6 @@ use crate::{
 };
 
 pub struct Camera {
-    pub frame_buffer: Vec<u32>,
     width: u32,
     height: u32,
     center: Vector3,
@@ -66,7 +66,6 @@ impl Camera {
         Self {
             width,
             height: height as u32,
-            frame_buffer: vec![0; width as usize * height as usize],
             center: camera_center,
             samples_per_pixel,
             max_depth: 50,
@@ -88,6 +87,36 @@ impl Camera {
         self.height
     }
 
+    pub fn render(&self, world: &World, frame_buffer: &mut [u32]) {
+        let start = Instant::now();
+
+        // One chunk is one row of pixels in the image
+        let chunks: Vec<(usize, &mut [u32])> = frame_buffer
+            .chunks_mut(self.width as usize)
+            .enumerate()
+            .collect();
+
+        chunks.into_par_iter().for_each(|(height_index, chunk)| {
+            for i in 0..self.width {
+                let mut color = Vector3::zero();
+                for _ in 0..self.samples_per_pixel {
+                    let ray = self.get_ray(i, height_index as u32);
+                    color = color + Self::ray_color(&world, &ray, self.max_depth);
+                }
+
+                // TODO: Simplify color handling
+                let (r, g, b) = (
+                    (clamp((color.x() * self.pixel_samples_scale).sqrt(), 0.0, 1.0) * 255.0) as u32,
+                    (clamp((color.y() * self.pixel_samples_scale).sqrt(), 0.0, 1.0) * 255.0) as u32,
+                    (clamp((color.z() * self.pixel_samples_scale).sqrt(), 0.0, 1.0) * 255.0) as u32,
+                );
+                chunk[i as usize] = (r << 16) | (g << 8) | b
+            }
+        });
+
+        println!("Frame time: {}ms", start.elapsed().as_millis());
+    }
+
     fn get_ray(&self, i: u32, j: u32) -> Ray {
         let offset = sample_square();
 
@@ -102,30 +131,6 @@ impl Camera {
         };
 
         Ray::new(origin, pixel_sample_center - origin)
-    }
-
-    pub fn render(&mut self, world: &World) {
-        let start = Instant::now();
-
-        for j in 0..self.height {
-            for i in 0..self.width {
-                let mut color = Vector3::zero();
-                for _ in 0..self.samples_per_pixel {
-                    let ray = self.get_ray(i, j);
-                    color = color + Self::ray_color(&world, &ray, self.max_depth);
-                }
-
-                // TODO: Simplify color handling
-                let (r, g, b) = (
-                    (clamp((color.x() * self.pixel_samples_scale).sqrt(), 0.0, 1.0) * 255.0) as u32,
-                    (clamp((color.y() * self.pixel_samples_scale).sqrt(), 0.0, 1.0) * 255.0) as u32,
-                    (clamp((color.z() * self.pixel_samples_scale).sqrt(), 0.0, 1.0) * 255.0) as u32,
-                );
-                self.frame_buffer[(i + (j * self.width)) as usize] = (r << 16) | (g << 8) | b
-            }
-        }
-
-        println!("Frame time: {}ms", start.elapsed().as_millis());
     }
 
     fn ray_color(world: &World, ray: &Ray, depth: u32) -> Vector3 {

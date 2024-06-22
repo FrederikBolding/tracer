@@ -17,9 +17,9 @@ fn main() {
     let vertical_fov = 20.0;
     let focus_distance = 10.0;
     let defocus_angle = 0.6;
-    let samples_per_pixel = 500;
+    let samples_per_pixel = 250;
 
-    let mut camera = Camera::new(
+    let camera = Camera::new(
         width,
         from,
         to,
@@ -29,6 +29,8 @@ fn main() {
         samples_per_pixel,
     );
     let height = camera.height();
+
+    let mut frame_buffer = vec![0; width as usize * height as usize];
 
     let mut window = Window::new(
         "tracer - ESC to exit",
@@ -96,11 +98,11 @@ fn main() {
         }
     }
 
-    camera.render(&world);
+    camera.render(&world, &mut frame_buffer);
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         window
-            .update_with_buffer(&camera.frame_buffer, width as usize, height as usize)
+            .update_with_buffer(&frame_buffer, width as usize, height as usize)
             .unwrap();
     }
 }

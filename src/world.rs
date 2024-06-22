@@ -1,4 +1,7 @@
-use crate::{ray::{HitRecord, Hittable, Ray}, sphere::Sphere};
+use crate::{
+    ray::{HitRecord, Hittable, Interval, Ray},
+    sphere::Sphere,
+};
 
 pub struct World {
     objects: Vec<Box<Sphere>>,
@@ -14,15 +17,16 @@ impl World {
         self.objects.push(Box::new(object));
     }
 
-    pub fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, t: Interval) -> Option<HitRecord> {
         let mut hit: Option<HitRecord> = None;
         for object in &self.objects {
             let closest_so_far = match hit {
                 Some(ref hit_record) => hit_record.t(),
-                None => t_max,
+                None => t.max(),
             };
 
-            if let Some(potential_hit) = object.hit(ray, t_min, closest_so_far) {
+            let interval = Interval::new(t.min(), closest_so_far);
+            if let Some(potential_hit) = object.hit(ray, interval) {
                 hit = Some(potential_hit);
             }
         }

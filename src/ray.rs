@@ -35,7 +35,13 @@ pub struct HitRecord {
 }
 
 impl HitRecord {
-    pub fn new(point: Vector3, normal: Vector3, material: Material, t: f64, front_face: bool) -> HitRecord {
+    pub fn new(
+        point: Vector3,
+        normal: Vector3,
+        material: Material,
+        t: f64,
+        front_face: bool,
+    ) -> HitRecord {
         Self {
             point,
             normal,
@@ -67,7 +73,7 @@ impl HitRecord {
 }
 
 pub trait Hittable {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
+    fn hit(&self, ray: &Ray, t: Interval) -> Option<HitRecord>;
 }
 
 pub fn derive_face_normal(ray: &Ray, outward_normal: Vector3) -> (bool, Vector3) {
@@ -79,4 +85,31 @@ pub fn derive_face_normal(ray: &Ray, outward_normal: Vector3) -> (bool, Vector3)
     };
 
     (front_face, normal)
+}
+
+pub struct Interval {
+    min: f64,
+    max: f64,
+}
+
+impl Interval {
+    pub fn new(min: f64, max: f64) -> Self {
+        Self { min, max }
+    }
+
+    pub fn min(&self) -> f64 {
+        self.min
+    }
+
+    pub fn max(&self) -> f64 {
+        self.max
+    }
+
+    pub fn clamp(&self, value: f64) -> f64 {
+        match value {
+            _ if value < self.min => self.min,
+            _ if value > self.max => self.max,
+            _ => value,
+        }
+    }
 }

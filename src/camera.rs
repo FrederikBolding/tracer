@@ -2,7 +2,7 @@ use rayon::prelude::*;
 use std::time::Instant;
 
 use crate::{
-    ray::Ray,
+    ray::{Interval, Ray},
     util::sample_square,
     vec::{cross_product, random_in_unit_disk, unit_vector, Vector3},
     world::World,
@@ -138,7 +138,8 @@ impl Camera {
             return Vector3::zero();
         }
 
-        let hit = world.hit(ray, 0.001, f64::INFINITY);
+        let interval = Interval::new(0.001, f64::INFINITY);
+        let hit = world.hit(ray, interval);
 
         match hit {
             Some(hit) => {

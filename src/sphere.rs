@@ -1,6 +1,6 @@
 use crate::{
     material::Material,
-    ray::{derive_face_normal, HitRecord, Hittable, Ray},
+    ray::{derive_face_normal, HitRecord, Hittable, Interval, Ray},
     vec::{dot_product, Vector3},
 };
 
@@ -33,7 +33,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, t: Interval) -> Option<HitRecord> {
         let oc = self.center() - ray.origin();
         let a = ray.direction().length_squared(); // dot(dir, dir)
         let h = dot_product(ray.direction(), oc);
@@ -49,9 +49,9 @@ impl Hittable for Sphere {
         let mut root = (h - sqrtd) / a;
 
         // TODO: Clean up
-        if root <= t_min || root >= t_max {
+        if root <= t.min() || root >= t.max() {
             root = (h + sqrtd) / a;
-            if root <= t_min || root >= t_max {
+            if root <= t.min() || root >= t.max() {
                 return None;
             }
         }

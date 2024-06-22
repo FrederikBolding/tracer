@@ -32,6 +32,7 @@ impl Camera {
         vertical_fov: f64,
         focus_distance: f64,
         defocus_angle: f64,
+        samples_per_pixel: u32,
     ) -> Self {
         let aspect_ratio = 16.0 / 9.0;
         let height = width as f64 / aspect_ratio;
@@ -61,8 +62,6 @@ impl Camera {
         let pixel00_loc = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
 
         let defocus_radius = focus_distance * (defocus_angle.to_radians() / 2.0).tan();
-
-        let samples_per_pixel = 100;
 
         Self {
             width,

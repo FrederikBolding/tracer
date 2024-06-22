@@ -15,3 +15,15 @@ pub fn random_float(min: f64, max: f64) -> f64 {
 pub fn sample_square() -> Vector3 {
     Vector3::new(random_unit_float() - 0.5, random_unit_float() - 0.5, 0.0)
 }
+
+pub fn random_color() -> Vector3 {
+    random_color_range(0.0, 1.0)
+}
+
+pub fn random_color_range(min: f64, max: f64) -> Vector3 {
+    Vector3::new(
+        random_float(min, max),
+        random_float(min, max),
+        random_float(min, max),
+    )
+}

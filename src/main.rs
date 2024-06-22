@@ -1,9 +1,12 @@
 // https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
+use std::sync::Arc;
+
 use minifb::{Key, Window, WindowOptions};
 use tracer::{
     camera::Camera,
     material::{Dielectric, Lambertian, Material, Metal},
+    ray::WorldObject,
     sphere::Sphere,
     util::{random_color, random_color_range, random_float, random_unit_float},
     vec::Vector3,
@@ -42,35 +45,35 @@ fn main() {
         panic!("{}", e);
     });
 
-    let mut world = World::new();
+    let mut objects: Vec<Arc<WorldObject>> = vec![];
 
     let material_ground = Material::Lambertian(Lambertian::new(Vector3::new(0.5, 0.5, 0.5)));
-    world.add(Sphere::new(
+    objects.push(WorldObject::Sphere(Sphere::new(
         Vector3::new(0.0, -1000.0, 0.0),
         1000.0,
         material_ground,
-    ));
+    )).into());
 
     let material_glass = Material::Dielectric(Dielectric::new(1.50));
-    world.add(Sphere::new(
+    objects.push(WorldObject::Sphere(Sphere::new(
         Vector3::new(0.0, 1.0, 0.0),
         1.0,
         material_glass,
-    ));
+    )).into());
 
     let material_diffuse = Material::Lambertian(Lambertian::new(Vector3::new(0.4, 0.2, 0.1)));
-    world.add(Sphere::new(
+    objects.push(WorldObject::Sphere(Sphere::new(
         Vector3::new(-4.0, 1.0, 0.0),
         1.0,
         material_diffuse,
-    ));
+    )).into());
 
     let material_metal = Material::Metal(Metal::new(Vector3::new(0.7, 0.6, 0.5), 0.0));
-    world.add(Sphere::new(
+    objects.push(WorldObject::Sphere(Sphere::new(
         Vector3::new(4.0, 1.0, 0.0),
         1.0,
         material_metal,
-    ));
+    )).into());
 
     for x in -11..11 {
         for z in -11..11 {
@@ -93,10 +96,12 @@ fn main() {
                     _ => Material::Dielectric(Dielectric::new(1.50)),
                 };
 
-                world.add(Sphere::new(center, 0.2, material));
+                objects.push(WorldObject::Sphere(Sphere::new(center, 0.2, material)).into());
             }
         }
     }
+
+    let world = World::new(objects);
 
     camera.render(&world, &mut frame_buffer);
 

@@ -95,6 +95,15 @@ impl Vector3 {
         let r_out_parallel = normal * (-(1.0 - r_out_perpendicular.length_squared()).abs().sqrt());
         r_out_perpendicular + r_out_parallel
     }
+
+    pub fn axis(&self, axis: i32) -> f64 {
+        match axis {
+            1 => self.y,
+            2 => self.z,
+            _ => self.x,
+        }
+    }
+
 }
 
 impl Add for Vector3 {

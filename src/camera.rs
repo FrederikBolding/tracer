@@ -139,7 +139,7 @@ impl Camera {
         }
 
         let interval = Interval::new(0.001, f64::INFINITY);
-        let hit = world.hit(ray, interval);
+        let hit = world.hit(ray, &interval);
 
         match hit {
             Some(hit) => {

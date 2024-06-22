@@ -1,5 +1,8 @@
 use crate::{
+    aabb::AABB,
+    bvh::BVHNode,
     material::Material,
+    sphere::Sphere,
     vec::{dot_product, Vector3},
 };
 
@@ -72,8 +75,31 @@ impl HitRecord {
     }
 }
 
+// TODO: Rename
+pub enum WorldObject {
+    BVHNode(BVHNode),
+    Sphere(Sphere),
+}
+
+impl WorldObject {
+    pub fn hit(&self, ray: &Ray, t: &Interval) -> Option<HitRecord> {
+        match self {
+            WorldObject::BVHNode(node) => node.hit(ray, t),
+            WorldObject::Sphere(sphere) => sphere.hit(ray, t),
+        }
+    }
+
+    pub fn bounding_box(&self) -> AABB {
+        match self {
+            WorldObject::BVHNode(node) => node.bounding_box(),
+            WorldObject::Sphere(sphere) => sphere.bounding_box(),
+        }
+    }
+}
+
 pub trait Hittable {
-    fn hit(&self, ray: &Ray, t: Interval) -> Option<HitRecord>;
+    fn hit(&self, ray: &Ray, t: &Interval) -> Option<HitRecord>;
+    fn bounding_box(&self) -> AABB;
 }
 
 pub fn derive_face_normal(ray: &Ray, outward_normal: Vector3) -> (bool, Vector3) {
@@ -87,6 +113,7 @@ pub fn derive_face_normal(ray: &Ray, outward_normal: Vector3) -> (bool, Vector3)
     (front_face, normal)
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct Interval {
     min: f64,
     max: f64,
@@ -97,12 +124,22 @@ impl Interval {
         Self { min, max }
     }
 
+    pub fn from_intervals(a: Interval, b: Interval) -> Self {
+        let min = if a.min <= b.min { a.min } else { b.min };
+        let max = if a.max >= b.max { a.max } else { b.max };
+        Self { min, max }
+    }
+
     pub fn min(&self) -> f64 {
         self.min
     }
 
     pub fn max(&self) -> f64 {
         self.max
+    }
+
+    pub fn size(&self) -> f64 {
+        self.max - self.min
     }
 
     pub fn clamp(&self, value: f64) -> f64 {

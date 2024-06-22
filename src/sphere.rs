@@ -1,4 +1,5 @@
 use crate::{
+    aabb::AABB,
     material::Material,
     ray::{derive_face_normal, HitRecord, Hittable, Interval, Ray},
     vec::{dot_product, Vector3},
@@ -8,14 +9,19 @@ pub struct Sphere {
     center: Vector3,
     radius: f64,
     material: Material,
+    bounding_box: AABB,
 }
 
 impl Sphere {
     pub fn new(center: Vector3, radius: f64, material: Material) -> Self {
+        let radius_vector = Vector3::new(radius, radius, radius);
+        let bounding_box = AABB::from_points(center - radius_vector, center + radius_vector);
+
         Self {
             center,
             radius,
             material,
+            bounding_box,
         }
     }
 
@@ -33,7 +39,11 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray, t: Interval) -> Option<HitRecord> {
+    fn bounding_box(&self) -> crate::aabb::AABB {
+        self.bounding_box
+    }
+
+    fn hit(&self, ray: &Ray, t: &Interval) -> Option<HitRecord> {
         let oc = self.center() - ray.origin();
         let a = ray.direction().length_squared(); // dot(dir, dir)
         let h = dot_product(ray.direction(), oc);

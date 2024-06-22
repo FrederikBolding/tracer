@@ -3,7 +3,7 @@ use std::time::Instant;
 use crate::{
     ray::Ray,
     util::sample_square,
-    vec::{cross_product, unit_vector, Vector3},
+    vec::{cross_product, random_in_unit_disk, unit_vector, Vector3},
     world::World,
 };
 
@@ -19,22 +19,30 @@ pub struct Camera {
     pixel_delta_v: Vector3,
     pixel00_loc: Vector3,
     pixel_samples_scale: f64,
+    defocus: bool,
+    defocus_disk_u: Vector3,
+    defocus_disk_v: Vector3,
 }
 
 impl Camera {
-    pub fn new(width: u32, look_from: Vector3, look_at: Vector3) -> Self {
+    pub fn new(
+        width: u32,
+        look_from: Vector3,
+        look_at: Vector3,
+        vertical_fov: f64,
+        focus_distance: f64,
+        defocus_angle: f64,
+    ) -> Self {
         let aspect_ratio = 16.0 / 9.0;
         let height = width as f64 / aspect_ratio;
 
         let camera_up = Vector3::new(0.0, 1.0, 0.0);
         let camera_center = look_from;
-        let vertical_fov: f64 = 90.0; // in degrees
 
-        let focal_length = (look_from - look_at).length();
         let theta = vertical_fov.to_radians();
         let h = (theta / 2.0).tan();
 
-        let viewport_height = 2.0 * h * focal_length;
+        let viewport_height = 2.0 * h * focus_distance;
         let viewport_width = viewport_height * (width as f64 / height as f64);
 
         let w = unit_vector(look_from - look_at);
@@ -48,9 +56,11 @@ impl Camera {
         let pixel_delta_v = viewport_v / height;
 
         let viewport_upper_left =
-            camera_center - (w * focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+            camera_center - (w * focus_distance) - viewport_u / 2.0 - viewport_v / 2.0;
 
         let pixel00_loc = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
+
+        let defocus_radius = focus_distance * (defocus_angle.to_radians() / 2.0).tan();
 
         let samples_per_pixel = 100;
 
@@ -65,6 +75,9 @@ impl Camera {
             pixel_delta_u,
             pixel_delta_v,
             pixel_samples_scale: 1.0 / samples_per_pixel as f64,
+            defocus_disk_u: u * defocus_radius,
+            defocus_disk_v: v * defocus_radius,
+            defocus: defocus_angle > 0.0,
         }
     }
 
@@ -83,7 +96,13 @@ impl Camera {
             + (self.pixel_delta_u * (i as f64 + offset.x()))
             + (self.pixel_delta_v * (j as f64 + offset.y()));
 
-        Ray::new(self.center, pixel_sample_center - self.center)
+        let origin = if self.defocus {
+            self.defocus_disk_sample()
+        } else {
+            self.center
+        };
+
+        Ray::new(origin, pixel_sample_center - origin)
     }
 
     pub fn render(&mut self, world: &World) {
@@ -137,6 +156,11 @@ impl Camera {
                 return Vector3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vector3::new(0.5, 0.7, 1.0) * a;
             }
         }
+    }
+
+    fn defocus_disk_sample(&self) -> Vector3 {
+        let point = random_in_unit_disk();
+        self.center + (self.defocus_disk_u * point.x()) + (self.defocus_disk_v * point.y())
     }
 }
 

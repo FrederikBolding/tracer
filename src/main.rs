@@ -13,7 +13,11 @@ fn main() {
     let width = 400;
     let from = Vector3::new(-2.0, 2.0, 1.0);
     let to = Vector3::new(0.0, 0.0, -1.0);
-    let mut camera = Camera::new(width, from, to);
+    let vertical_fov = 20.0;
+    let focus_distance = 3.4;
+    let defocus_angle = 10.0;
+
+    let mut camera = Camera::new(width, from, to, vertical_fov, focus_distance, defocus_angle);
     let height = camera.height();
 
     let mut window = Window::new(

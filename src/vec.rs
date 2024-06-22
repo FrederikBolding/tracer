@@ -160,3 +160,12 @@ pub fn cross_product(u: Vector3, v: Vector3) -> Vector3 {
 pub fn unit_vector(v: Vector3) -> Vector3 {
     v / v.length()
 }
+
+pub fn random_in_unit_disk() -> Vector3 {
+    loop {
+        let point = Vector3::new(random_float(-1.0, 1.0), random_float(-1.0, 1.0), 0.0);
+        if point.length_squared() < 1.0 {
+            return point;
+        }
+    }
+}

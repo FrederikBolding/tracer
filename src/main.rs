@@ -11,7 +11,9 @@ use tracer::{
 
 fn main() {
     let width = 400;
-    let mut camera = Camera::new(width);
+    let from = Vector3::new(-2.0, 2.0, 1.0);
+    let to = Vector3::new(0.0, 0.0, -1.0);
+    let mut camera = Camera::new(width, from, to);
     let height = camera.height();
 
     let mut window = Window::new(

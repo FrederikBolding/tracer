@@ -3,7 +3,7 @@ use std::time::Instant;
 use crate::{
     ray::Ray,
     util::sample_square,
-    vec::{unit_vector, Vector3},
+    vec::{cross_product, unit_vector, Vector3},
     world::World,
 };
 
@@ -22,25 +22,33 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(width: u32) -> Self {
+    pub fn new(width: u32, look_from: Vector3, look_at: Vector3) -> Self {
         let aspect_ratio = 16.0 / 9.0;
         let height = width as f64 / aspect_ratio;
-        let viewport_height = 2.0;
+
+        let camera_up = Vector3::new(0.0, 1.0, 0.0);
+        let camera_center = look_from;
+        let vertical_fov: f64 = 90.0; // in degrees
+
+        let focal_length = (look_from - look_at).length();
+        let theta = vertical_fov.to_radians();
+        let h = (theta / 2.0).tan();
+
+        let viewport_height = 2.0 * h * focal_length;
         let viewport_width = viewport_height * (width as f64 / height as f64);
 
-        let camera_center = Vector3::zero();
-        let focal_length = 1.0;
+        let w = unit_vector(look_from - look_at);
+        let u = unit_vector(cross_product(camera_up, w));
+        let v = cross_product(w, u);
 
-        let viewport_u = Vector3::new(viewport_width, 0.0, 0.0);
-        let viewport_v = Vector3::new(0.0, -viewport_height, 0.0);
+        let viewport_u = u * viewport_width;
+        let viewport_v = -v * viewport_height;
 
         let pixel_delta_u = viewport_u / width as f64;
         let pixel_delta_v = viewport_v / height;
 
-        let viewport_upper_left = camera_center
-            - Vector3::new(0.0, 0.0, focal_length)
-            - viewport_u / 2.0
-            - viewport_v / 2.0;
+        let viewport_upper_left =
+            camera_center - (w * focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
 
         let pixel00_loc = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
 
@@ -50,9 +58,9 @@ impl Camera {
             width,
             height: height as u32,
             frame_buffer: vec![0; width as usize * height as usize],
-            center: Vector3::zero(),
+            center: camera_center,
             samples_per_pixel,
-            max_depth: 10,
+            max_depth: 50,
             pixel00_loc,
             pixel_delta_u,
             pixel_delta_v,

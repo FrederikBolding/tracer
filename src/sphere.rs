@@ -59,9 +59,9 @@ impl Hittable for Sphere {
         let mut root = (h - sqrtd) / a;
 
         // TODO: Clean up
-        if root <= t.min() || root >= t.max() {
+        if !t.surrounds(root) {
             root = (h + sqrtd) / a;
-            if root <= t.min() || root >= t.max() {
+            if !t.surrounds(root) {
                 return None;
             }
         }

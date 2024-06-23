@@ -2,6 +2,7 @@ use crate::{
     aabb::AABB,
     bvh::BVHNode,
     material::Material,
+    quad::Quad,
     sphere::Sphere,
     vec::{dot_product, Vector3},
 };
@@ -79,6 +80,7 @@ impl HitRecord {
 pub enum WorldObject {
     BVHNode(BVHNode),
     Sphere(Sphere),
+    Quad(Quad),
 }
 
 impl WorldObject {
@@ -86,6 +88,7 @@ impl WorldObject {
         match self {
             WorldObject::BVHNode(node) => node.hit(ray, t),
             WorldObject::Sphere(sphere) => sphere.hit(ray, t),
+            WorldObject::Quad(quad) => quad.hit(ray, t),
         }
     }
 
@@ -93,6 +96,7 @@ impl WorldObject {
         match self {
             WorldObject::BVHNode(node) => node.bounding_box(),
             WorldObject::Sphere(sphere) => sphere.bounding_box(),
+            WorldObject::Quad(quad) => quad.bounding_box(),
         }
     }
 }
@@ -142,11 +146,24 @@ impl Interval {
         self.max - self.min
     }
 
+    pub fn contains(&self, value: f64) -> bool {
+        value >= self.min && value <= self.max
+    }
+
+    pub fn surrounds(&self, value: f64) -> bool {
+        value > self.min && value < self.max
+    }
+
     pub fn clamp(&self, value: f64) -> f64 {
         match value {
             _ if value < self.min => self.min,
             _ if value > self.max => self.max,
             _ => value,
         }
+    }
+
+    pub fn expand(&self, delta: f64) -> Interval {
+        let padding = delta / 2.0;
+        Interval::new(self.min - padding, self.max + padding)
     }
 }

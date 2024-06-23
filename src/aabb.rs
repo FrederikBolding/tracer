@@ -25,7 +25,7 @@ impl AABB {
         let x = Interval::from_intervals(a.x, b.x);
         let y = Interval::from_intervals(a.y, b.y);
         let z = Interval::from_intervals(a.z, b.z);
-        Self { x, y, z }
+        Self::new(x, y, z)
     }
 
     pub fn from_points(a: Vector3, b: Vector3) -> Self {
@@ -45,7 +45,16 @@ impl AABB {
             Interval::new(b.z(), a.z())
         };
 
-        Self { x, y, z }
+        Self::new(x, y, z)
+    }
+
+    fn new(x: Interval, y: Interval, z: Interval) -> Self {
+        let delta = 0.0001;
+        Self {
+            x: if x.size() < delta { x.expand(delta) } else { x },
+            y: if y.size() < delta { y.expand(delta) } else { y },
+            z: if z.size() < delta { z.expand(delta) } else { z },
+        }
     }
 
     pub fn axis_interval(&self, axis: i32) -> Interval {

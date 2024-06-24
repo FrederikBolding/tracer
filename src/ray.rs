@@ -1,10 +1,5 @@
 use crate::{
-    aabb::AABB,
-    bvh::BVHNode,
-    material::Material,
-    quad::Quad,
-    sphere::Sphere,
-    vec::{dot_product, Vector3},
+    aabb::AABB, bvh::BVHNode, material::Material, mesh::Mesh, quad::Quad, sphere::Sphere, vec::{dot_product, Vector3}
 };
 
 pub struct Ray {
@@ -81,6 +76,7 @@ pub enum WorldObject {
     BVHNode(BVHNode),
     Sphere(Sphere),
     Quad(Quad),
+    Mesh(Mesh),
 }
 
 impl WorldObject {
@@ -89,6 +85,7 @@ impl WorldObject {
             WorldObject::BVHNode(node) => node.hit(ray, t),
             WorldObject::Sphere(sphere) => sphere.hit(ray, t),
             WorldObject::Quad(quad) => quad.hit(ray, t),
+            WorldObject::Mesh(mesh) => mesh.hit(ray, t),
         }
     }
 
@@ -97,6 +94,7 @@ impl WorldObject {
             WorldObject::BVHNode(node) => node.bounding_box(),
             WorldObject::Sphere(sphere) => sphere.bounding_box(),
             WorldObject::Quad(quad) => quad.bounding_box(),
+            WorldObject::Mesh(mesh) => mesh.bounding_box(),
         }
     }
 }

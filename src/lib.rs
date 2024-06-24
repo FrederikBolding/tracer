@@ -2,6 +2,7 @@ pub mod aabb;
 pub mod bvh;
 pub mod camera;
 pub mod material;
+pub mod mesh;
 pub mod quad;
 pub mod ray;
 pub mod sphere;

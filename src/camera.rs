@@ -14,6 +14,7 @@ pub struct Camera {
     center: Vector3,
     samples_per_pixel: u32,
     max_depth: u32,
+    background: Vector3,
 
     pixel_delta_u: Vector3,
     pixel_delta_v: Vector3,
@@ -33,6 +34,7 @@ impl Camera {
         focus_distance: f64,
         defocus_angle: f64,
         samples_per_pixel: u32,
+        background: Vector3,
     ) -> Self {
         let aspect_ratio = 16.0 / 9.0;
         let height = width as f64 / aspect_ratio;
@@ -69,6 +71,7 @@ impl Camera {
             center: camera_center,
             samples_per_pixel,
             max_depth: 50,
+            background,
             pixel00_loc,
             pixel_delta_u,
             pixel_delta_v,
@@ -103,7 +106,7 @@ impl Camera {
                 let mut color = Vector3::zero();
                 for _ in 0..self.samples_per_pixel {
                     let ray = self.get_ray(i, height_index as u32);
-                    color = color + Self::ray_color(&world, &ray, self.max_depth);
+                    color = color + self.ray_color(&world, &ray, self.max_depth);
                 }
 
                 let scaled_color = color * self.pixel_samples_scale;
@@ -138,7 +141,7 @@ impl Camera {
         Ray::new(origin, pixel_sample_center - origin)
     }
 
-    fn ray_color(world: &World, ray: &Ray, depth: u32) -> Vector3 {
+    fn ray_color(&self, world: &World, ray: &Ray, depth: u32) -> Vector3 {
         if depth <= 0 {
             return Vector3::zero();
         }
@@ -150,21 +153,17 @@ impl Camera {
             Some(hit) => {
                 let material = hit.material();
 
+                let emitted = material.emitted(hit.point());
+
                 let bounce = material.scatter(ray, &hit);
                 match bounce {
                     Some((bounce_ray, attenunation)) => {
-                        Self::ray_color(world, &bounce_ray, depth - 1) * attenunation
+                        emitted + self.ray_color(world, &bounce_ray, depth - 1) * attenunation
                     }
-                    None => Vector3::zero(),
+                    None => emitted,
                 }
             }
-            None => {
-                let unit_direction = unit_vector(ray.direction());
-
-                let a = 0.5 * (unit_direction.y() + 1.0);
-
-                return Vector3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vector3::new(0.5, 0.7, 1.0) * a;
-            }
+            None => self.background,
         }
     }
 

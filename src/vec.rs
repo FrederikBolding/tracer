@@ -103,7 +103,6 @@ impl Vector3 {
             _ => self.x,
         }
     }
-
 }
 
 impl Add for Vector3 {

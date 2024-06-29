@@ -9,6 +9,7 @@ pub enum Material {
     Lambertian(Lambertian),
     Metal(Metal),
     Dielectric(Dielectric),
+    Light(Light),
 }
 
 impl Material {
@@ -17,6 +18,14 @@ impl Material {
             Material::Lambertian(lambertian) => lambertian.scatter(ray_in, hit_record),
             Material::Metal(metal) => metal.scatter(ray_in, hit_record),
             Material::Dielectric(dielectric) => dielectric.scatter(ray_in, hit_record),
+            _ => None,
+        }
+    }
+
+    pub fn emitted(&self, point: Vector3) -> Vector3 {
+        match self {
+            Material::Light(light) => light.emitted(point),
+            _ => Vector3::zero(),
         }
     }
 }
@@ -122,5 +131,22 @@ impl Scatterable for Dielectric {
             Ray::new(hit_record.point(), direction),
             Vector3::new(1.0, 1.0, 1.0),
         ))
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Light {
+    color: Vector3,
+}
+
+impl Light {
+    pub fn new(color: Vector3) -> Self {
+        Self { color }
+    }
+}
+
+impl Light {
+    pub fn emitted(&self, _point: Vector3) -> Vector3 {
+        self.color
     }
 }

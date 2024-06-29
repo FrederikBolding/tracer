@@ -1,5 +1,11 @@
 use crate::{
-    aabb::AABB, bvh::BVHNode, material::Material, mesh::Mesh, quad::Quad, sphere::Sphere, vec::{dot_product, Vector3}
+    aabb::AABB,
+    bvh::BVHNode,
+    material::Material,
+    mesh::Mesh,
+    quad::Quad,
+    sphere::Sphere,
+    vec::{dot_product, Vector3},
 };
 
 pub struct Ray {

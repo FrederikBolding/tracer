@@ -19,8 +19,7 @@ fn main() {
     let to = Vector3::new(0.0, 0.0, 0.0);
     let vertical_fov = 20.0;
     let focus_distance = 10.0;
-    let defocus_angle = 0.6;
-    let samples_per_pixel = 250;
+    let background = Vector3::new(0.7, 0.8, 1.0);
 
     let camera = Camera::new(
         width,
@@ -30,6 +29,7 @@ fn main() {
         focus_distance,
         defocus_angle,
         samples_per_pixel,
+        background,
     );
     let height = camera.height();
 

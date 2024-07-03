@@ -43,13 +43,10 @@ impl BVHNode {
             let a_axis_interval = a.bounding_box().axis_interval(sort_axis);
             let b_axis_interval = b.bounding_box().axis_interval(sort_axis);
 
-            if a_axis_interval.min() < b_axis_interval.min() {
-                return Ordering::Less;
-            } else if a_axis_interval.min() > b_axis_interval.min() {
-                return Ordering::Greater;
-            } else {
-                return Ordering::Equal;
-            }
+            let a_center = (a_axis_interval.min() + a_axis_interval.max()) / 2.0;
+            let b_center = (b_axis_interval.min() + b_axis_interval.max()) / 2.0;
+
+            a_center.partial_cmp(&b_center).unwrap()
         });
 
         let middle = copied_objects.len() / 2;

@@ -98,9 +98,10 @@ impl Vector3 {
 
     pub fn axis(&self, axis: i32) -> f64 {
         match axis {
+            0 => self.x,
             1 => self.y,
             2 => self.z,
-            _ => self.x,
+            _ => panic!(),
         }
     }
 }

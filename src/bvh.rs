@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, sync::Arc};
+use std::sync::Arc;
 
 use crate::{
     aabb::AABB,
@@ -69,17 +69,18 @@ impl Hittable for BVHNode {
     }
 
     fn hit(&self, ray: &Ray, t: &Interval) -> Option<HitRecord> {
-        if self.bounding_box.hit(ray, t).is_none() {
+        let bbox_hit = self.bounding_box.hit(ray, t);
+        if bbox_hit.is_none() {
             return None;
         }
 
-        let left_hit = self.left.hit(ray, t);
+        let bbox_interval = bbox_hit.unwrap();
+        let left_hit = self.left.hit(ray, &bbox_interval);
 
-        let t_max = match left_hit {
-            Some(ref left_hit) => left_hit.t(),
-            None => t.max(),
+        let right_interval = match left_hit {
+            Some(ref left_hit) => Interval::new(bbox_interval.min(), left_hit.t()),
+            None => bbox_interval,
         };
-        let right_interval = Interval::new(t.min(), t_max);
         let right_hit = self.right.hit(ray, &right_interval);
 
         if right_hit.is_some() {

@@ -59,9 +59,10 @@ impl AABB {
 
     pub fn axis_interval(&self, axis: i32) -> Interval {
         match axis {
+            0 => self.x,
             1 => self.y,
             2 => self.z,
-            _ => self.x,
+            _ => panic!()
         }
     }
 
@@ -72,7 +73,7 @@ impl AABB {
         let mut t_min = ray_t.min();
         let mut t_max = ray_t.max();
 
-        for axis in 0..=3 {
+        for axis in 0..=2 {
             let interval = self.axis_interval(axis);
 
             let ad_inverse = 1.0 / direction.axis(axis);

@@ -11,9 +11,22 @@ pub struct BVHNode {
     left: Arc<WorldObject>,
     right: Arc<WorldObject>,
     bounding_box: AABB,
+    single: bool,
 }
 
 impl BVHNode {
+    pub fn new_single_leaf(object: Arc<WorldObject>) -> Self {
+        let left = object.clone();
+        let right = object.clone();
+        let bounding_box = object.bounding_box();
+        Self {
+            left,
+            right,
+            bounding_box,
+            single: true,
+        }
+    }
+
     pub fn new_leaf(left: Arc<WorldObject>, right: Arc<WorldObject>) -> Self {
         let bounding_box = AABB::from_bounding_boxes(left.bounding_box(), right.bounding_box());
 
@@ -21,12 +34,13 @@ impl BVHNode {
             left,
             right,
             bounding_box,
+            single: false,
         }
     }
 
     pub fn new(objects: Vec<Arc<WorldObject>>) -> Self {
         if objects.len() == 1 {
-            return BVHNode::new_leaf(objects[0].clone(), objects[0].clone());
+            return BVHNode::new_single_leaf(objects[0].clone());
         } else if objects.len() == 2 {
             return BVHNode::new_leaf(objects[0].clone(), objects[1].clone());
         }
@@ -59,6 +73,7 @@ impl BVHNode {
             left,
             right,
             bounding_box,
+            single: false,
         }
     }
 }
@@ -76,6 +91,10 @@ impl Hittable for BVHNode {
 
         let bbox_interval = bbox_hit.unwrap();
         let left_hit = self.left.hit(ray, &bbox_interval);
+
+        if self.single {
+            return left_hit;
+        }
 
         let right_interval = match left_hit {
             Some(ref left_hit) => Interval::new(bbox_interval.min(), left_hit.t()),

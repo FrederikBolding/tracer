@@ -11,11 +11,19 @@ use crate::{
 pub struct Ray {
     origin: Vector3,    // A
     direction: Vector3, // b
+
+    // Cached values
+    direction_inverse: Vector3,
+    direction_length_squared: f64,
 }
 
 impl Ray {
     pub fn new(origin: Vector3, direction: Vector3) -> Ray {
-        Self { origin, direction }
+        // Precompute direction inverse for box intersection.
+        let direction_inverse = Vector3::new(1.0 / direction.x(), 1.0 / direction.y(), 1.0 / direction.z());
+        // Precompute direction length squared.
+        let direction_length_squared = direction.length_squared();
+        Self { origin, direction, direction_inverse, direction_length_squared }
     }
 
     pub fn at(&self, t: f64) -> Vector3 {
@@ -28,6 +36,14 @@ impl Ray {
 
     pub fn direction(&self) -> Vector3 {
         self.direction
+    }
+
+    pub fn direction_inverse(&self) -> Vector3 {
+        self.direction_inverse
+    }
+
+    pub fn direction_length_squared(&self) -> f64 {
+        self.direction_length_squared
     }
 }
 
@@ -108,17 +124,6 @@ impl WorldObject {
 pub trait Hittable {
     fn hit(&self, ray: &Ray, t: &Interval) -> Option<HitRecord>;
     fn bounding_box(&self) -> AABB;
-}
-
-pub fn derive_face_normal(ray: &Ray, outward_normal: Vector3) -> (bool, Vector3) {
-    let front_face = dot_product(ray.direction(), outward_normal) < 0.0;
-    let normal = if front_face {
-        outward_normal
-    } else {
-        -outward_normal
-    };
-
-    (front_face, normal)
 }
 
 #[derive(Debug, Clone, Copy)]

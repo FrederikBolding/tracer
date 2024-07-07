@@ -68,7 +68,7 @@ impl AABB {
 
     pub fn hit(&self, ray: &Ray, ray_t: &Interval) -> Option<Interval> {
         let origin = ray.origin();
-        let direction = ray.direction();
+        let direction_inverse = ray.direction_inverse();
 
         let mut t_min = ray_t.min();
         let mut t_max = ray_t.max();
@@ -76,28 +76,15 @@ impl AABB {
         for axis in 0..=2 {
             let interval = self.axis_interval(axis);
 
-            let ad_inverse = 1.0 / direction.axis(axis);
+            let ad_inverse = direction_inverse.axis(axis);
 
             let axis_value = origin.axis(axis);
 
             let t0 = (interval.min() - axis_value) * ad_inverse;
             let t1 = (interval.max() - axis_value) * ad_inverse;
 
-            if t0 < t1 {
-                if t0 > t_min {
-                    t_min = t0;
-                }
-                if t1 < t_max {
-                    t_max = t1;
-                }
-            } else {
-                if t1 > t_min {
-                    t_min = t1;
-                }
-                if t0 < t_max {
-                    t_max = t0;
-                }
-            }
+            t_min = t0.max(t_min).min(t1.max(t_min));
+            t_max = t0.min(t_max).max(t1.min(t_max));
 
             if t_min >= t_max {
                 return None;
